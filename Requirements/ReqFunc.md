@@ -43,4 +43,8 @@
 
 - **RF25** – El LLM trabaja con skills: guías paso a paso por tipo de tarea (investigar un incidente de pagos, armar una query de solo lectura, correr un E2E, escalar), escritas por ingeniería y con versión. Contexto Service carga la skill que corresponde a la pregunta junto con el estado, el conocimiento y el historial; el LLM sigue esos pasos y usa solo las acciones que la skill indica. Una skill nueva o cambiada entra en máximo 15 minutos y pasa por las pruebas diarias antes de usarse.
 
+## Agregado al revisar quién entra a Genius
+
+- **RF26** – Un administrador crea las cuentas de Genius (soporte, SRE, incident manager) y le pone el rol a cada una, y las desactiva cuando alguien sale del equipo. Nadie entra sin cuenta creada, y el rol de la cuenta es el que decide qué puede hacer (RF12).
+
 Cada requerimiento sale de una necesidad o un pain point de Diego, Valeria o Marco (ver `Personas/`). Qué pieza del harness cumple cada uno está en `HARNESS.md`.

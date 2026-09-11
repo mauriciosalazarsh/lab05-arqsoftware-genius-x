@@ -6,7 +6,7 @@
 
 - Camino de una pregunta: Genius App → Login Service → Filtro Service → Consulta Service → (si no hay respuesta guardada) Contexto Service → Cola de Preguntas → LLM local → Revisión Service → respuesta.
 - Camino de una acción: Revisión Service → Acciones Service → lectura (Copia de lectura, Pruebas Service) / escritura (Aprobación Service → otro SRE) / borrar (bloqueado) → Auditoría.
-- Camino de un cambio de incidente: Incidentes Service → Cola de Cambios → Estado Actual, SLA Service, Auditoría, Respuestas Guardadas.
+- Camino de un cambio de incidente: Incidentes Service → Cola de Cambios → Estado Actual, SLA Service, Auditoría, Cache de Respuestas.
 
 | Otra opción | Por qué no |
 |---|---|
@@ -20,7 +20,7 @@
 |---|---|---|
 | Incidentes, escalamientos, aprobaciones, usuarios y roles | BD SQL principal + réplica síncrona (RPO 0) | Es la fuente de verdad y necesita transacciones |
 | Auditoría | Tabla donde solo se agrega (sin UPDATE ni DELETE), copia mensual a almacenamiento de archivos | Nadie la puede cambiar; se guarda 1 año |
-| Estado Actual y Respuestas Guardadas | Memoria rápida (caché) que se actualiza con los avisos de la Cola de Cambios | Responder en menos de 1 segundo y siempre igual |
+| Estado Actual y Cache de Respuestas | Memoria rápida (caché) que se actualiza con los avisos de la Cola de Cambios | Responder en menos de 1 segundo y siempre igual |
 | Historial por incidente | BD SQL | Sobrevive a reinicios del LLM |
 | Base de Conocimiento | Documentos con versión + índice de búsqueda por significado | Citar fuente y fecha en cada respuesta |
 | Cola de Preguntas y Cola de Cambios | Cola durable (el mensaje no se pierde si una pieza está caída) | Aguantar picos y no perder avisos |

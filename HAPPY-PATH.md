@@ -8,7 +8,7 @@ Diagrama: [harness-hp1.pdf](Diagramas/harness-hp1.pdf)
 
 1. Diego escribe en Genius App: "¿en qué está el INC-4471 y qué hago?".
 2. Login Service ve que es soporte. Filtro Service revisa que la pregunta esté limpia.
-3. Consulta Service busca en Respuestas Guardadas. Como es un incidente puntual, no existe.
+3. Consulta Service busca en Cache de Respuestas. Como es un incidente puntual, no existe.
 4. Contexto Service junta el Estado Actual del incidente, los pasos a seguir para customer escalations y el historial de ese incidente.
 5. La pregunta entra a la Cola de Preguntas. Como es customer escalation va segunda en prioridad. LLM local #1 responde en menos de 5 segundos.
 6. Revisión Service ve que es texto. Diego recibe el estado real con hora y fuente, y los pasos a seguir.

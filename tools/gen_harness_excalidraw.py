@@ -119,7 +119,7 @@ def draw(focus=None, title=None, skip=()):
      "RF16 feedback validado", "RF17 cola de preguntas (urgentes 1o)", "RF18 responde sin LLM + /incident",
      "RF19 filtro de entrada / revision", "RF20 pruebas diarias (gate <95 %)", "RF21 panel de salud (semaforo)",
      "RF22 pasos a seguir por tipo", "RF23 misma pregunta, misma respuesta", "RF24 tablero de SLA",
-     "RF25 skills: guias por tipo de tarea",
+     "RF25 skills: guias por tipo de tarea", "RF26 alta de usuarios con su rol",
     ]
     text(40, 160, "Requerimientos (backlog) — cubiertos en iteracion #2:", 15, BLACK)
     text(40, 190, "\n".join(f"- {b}  DONE" for b in backlog), 14, BLUE)
@@ -138,6 +138,8 @@ def draw(focus=None, title=None, skip=()):
     text(240, ly + 175, "texto rojo = SPOF /\nriesgo alto", 13, RED)
     text(240, ly + 225, "flecha punteada =\naviso / async", 13, BLACK)
     text(240, ly + 275, "etiqueta en flecha =\ncondicion o patron\nde reliability", 13, BLACK)
+    box(110, ly + 330, "CIRCUIT BREAKER", 190, 42, RED, "transparent", 12)
+    text(240, ly + 330, "rectangulo rojo sin relleno =\ncircuit breaker", 13, BLACK)
 
     # ───────────────────────── Iteración #1: harness actual ─────────────────────────
     text(700, 60, "iteracion #1 — harness actual (enunciado)", 20, BLACK)
@@ -155,21 +157,25 @@ def draw(focus=None, title=None, skip=()):
 
     # ───────────────────────── Iteración #2: nuevo harness ─────────────────────────
     t2 = text(700, 450, title or "iteracion #2 — nuevo harness con reliability y fault tolerance", 20, BLACK)
-    C = [700, 1000, 1340, 1680, 2020, 2360, 2700, 3040, 3380]
+    C = [700, 1000, 1340, 1680, 2020, 2360, 2700, 3120, 3500]
     R0, R1, R2, R3, R4, R5 = 530, 720, 970, 1210, 1450, 1690
 
     # apoyo (arriba)
     aprend = box(C[3], R0, "Aprendizaje Service\n(feedback validado por\nuna persona, <=1 dia)", 220, 80, fs=13)
     indexar = box(C[7], R0, "Indexar Job <15 min>\nlo nuevo entra, lo viejo\nqueda marcado", 220, 80, GREEN, GREEN_BG, 13)
     pruebasd = box(C[8], R0, "Pruebas Diarias Job\npreguntas comunes vs\nrespuesta esperada", 220, 80, GREEN, GREEN_BG, 13)
-    resp_g = db(C[4], R1, "Respuestas\nGuardadas", fs=13)
+    resp_g = db(C[4], R1, "Cache de\nRespuestas", fs=13)
     hist = db(C[5], R1, "Historial", fs=14)
     conoc = db(C[6], R1, "Base de\nConocimiento", fs=13)
     skills = db(C[7], R1, "Skills\n(guias por tarea)", fs=12)
     # camino principal
-    u_sop = user(C[0], R2 - 140, "Soporte"); u_sre = user(C[0], R2, "SRE on-call"); u_im = user(C[0], R2 + 140, "Incident\nmanager")
+    u_sop = user(C[0], R2 - 150, "Diego Ramos\nSoporte N2"); u_sre = user(C[0], R2, "Valeria Torres\nSRE on-call")
+    u_im = user(C[0], R2 + 150, "Marco Salas\nIncident manager")
     app = box(C[1], R2, "Genius App\n(Slack / Web)", 170, 70)
     login = box(C[2], R2, "Login\nService", 170, 70)
+    u_adm = user(C[0], R1 - 60, "Admin de Genius")
+    registro = box(C[1], R1, "Registro de Usuarios\nService (crea la cuenta\ny le pone el rol)", 220, 80, fs=13)
+    usuarios = db(C[2], R1, "Usuarios\ny roles", fs=13)
     filtro = box(C[3], R2, "Filtro\nService", 170, 70)
     consulta = box(C[4], R2, "Consulta\nService", 170, 70)
     contexto = box(C[5], R2, "Contexto\nService", 170, 70)
@@ -199,8 +205,11 @@ def draw(focus=None, title=None, skip=()):
 
     # Flechas: camino de una pregunta
     arrow(u_sop, app); arrow(u_sre, app); arrow(u_im, app)
+    arrow(u_adm, registro, "crea la cuenta", offset=(0, -16)); arrow(registro, usuarios, "guarda rol")
+    arrow(login, usuarios, "valida contra\nusuarios y roles", offset=(46, 0))
     arrow(app, login, "quien es", offset=(0, -18)); arrow(login, filtro, "rol OK", offset=(0, -18)); arrow(filtro, consulta, "pregunta OK", offset=(0, -18))
     arrow(consulta, resp_g, "ya existe?", offset=(70, 0))
+    note(C[4] + 90, R1 - 85, "CACHE de Respuestas: protege el cuello de botella (LLM)", 12, BLUE)
     note(C[4] + 165, R1 + 40, "ya existe -> responde\nigual que siempre", 12, BLUE)
     arrow(consulta, contexto, "no existe", offset=(0, -18))
     arrow(contexto, hist, "lo ya hecho", offset=(65, 0)); arrow(contexto, conoc, "runbooks con\nfecha y version", offset=(60, -20))
@@ -210,15 +219,18 @@ def draw(focus=None, title=None, skip=()):
     arrow(consulta, estado, "")
     note(C[4] + 130, R2 + 62, "si el LLM no responde:\nestado + respuesta guardada", 12, BLUE)
     arrow(contexto, cola, "pregunta +\ncontexto", offset=(0, -30))
-    arrow(cola, llm1, "urgentes 1o\ntimeout 5 s", offset=(0, -30))
-    arrow(cola, llm2, "si #1 no responde\n(retry) · circuit breaker", offset=(0, 34))
+    cb_llm = box((C[6] + C[7]) / 2, R2, "CIRCUIT BREAKER\ntimeout 5 s · si #1 no\nresponde, retry en #2", 230, 74, RED, "transparent", 12)
+    arrow(cola, cb_llm, ""); arrow(cb_llm, llm1, ""); arrow(cb_llm, llm2, "")
     arrow(llm1, revision, "respuesta"); arrow(llm2, revision, "")
     arrow(aprend, resp_g, "correccion\nvalidada", dashed=True, offset=(-70, 0))
     arrow(indexar, conoc, "", dashed=True)
     arrow(pruebasd, llm1, "cada dia", dashed=True, color=GREEN, offset=(60, -10))
-    note(C[8], R2 - 75, "es texto -> respuesta al ingeniero\ncon fuente y fecha", 12, BLUE)
-    note(C[2], R2 + 55, "riesgo alto: si se equivoca de rol"); note(C[7], R2 + 100, "riesgo alto: se satura en el pico")
+    note(C[2], R2 + 55, "riesgo alto: si se equivoca de rol")
+    note(C[7], R2 + 118, "CUELLO DE BOTELLA (bottleneck): el LLM se satura en el pico\nlo aguantan la Cola, las 2 copias, el CIRCUIT BREAKER y el CACHE de Respuestas")
+    note(C[4] + 150, R3 + 66, "SPOF: Slack API es de un tercero y es el unico canal\nlo aguantan el CIRCUIT BREAKER y el Email Service de respaldo")
     # camino de una accion
+    arrow(revision, app, "es texto: la respuesta vuelve al ingeniero con fuente y fecha", dashed=True,
+          via=[(C[8], R2 - 180), (C[1], R2 - 180)], at=(1750, R2 - 155))
     arrow(revision, acciones, "es una accion", offset=(75, 0))
     arrow(acciones, copia, "lectura", offset=(50, 0))
     arrow(acciones, pruebas, "pruebas E2E", offset=(40, 14))
@@ -226,7 +238,8 @@ def draw(focus=None, title=None, skip=()):
     arrow(acciones, incid, "bajo riesgo (escalar, comentar): crea o actualiza el incidente sin aprobacion", via=[(C[8] + 120, R3), (C[8] + 120, R5 - 90), (C[2], R5 - 90)], at=(2200, R5 - 108))
     note(C[8] + 210, R3, "BORRAR / CAMBIAR\nESTRUCTURA:\nBLOQUEADO\n(riesgo muy alto)")
     arrow(aprob, mensajes, "pide OK a\notro SRE", offset=(0, -30))
-    arrow(mensajes, slackapi, "retry +\ncircuit breaker", offset=(0, -30))
+    cb_slack = box((C[4] + C[5]) / 2, R3, "CIRCUIT BREAKER\nretry", 150, 52, RED, "transparent", 11)
+    arrow(mensajes, cb_slack, ""); arrow(cb_slack, slackapi, "")
     arrow(mensajes, email, "si Slack falla", offset=(55, 0))
     note(C[7], R3 + 62, "aprobado -> Acciones ejecuta\nsi nadie aprueba en 30 min, se cancela", 12, BLUE)
     note(C[8] - 60, R4 + 70, "solo SELECT · 1000 filas\ntimeout 10 s")
@@ -245,7 +258,8 @@ def draw(focus=None, title=None, skip=()):
     arrow(u_im, panel, "")
     note(C[3] + 170, R3 + 78, "riesgo alto: si no\nse actualiza"); note(C[1], R4 + 62, "riesgo alto: RPO 0")
 
-    named = dict(u_sop=u_sop, u_sre=u_sre, u_im=u_im, app=app, login=login, filtro=filtro, consulta=consulta, resp_g=resp_g,
+    named = dict(u_sop=u_sop, u_sre=u_sre, u_im=u_im, u_adm=u_adm, registro=registro, usuarios=usuarios,
+                 cb_llm=cb_llm, cb_slack=cb_slack, app=app, login=login, filtro=filtro, consulta=consulta, resp_g=resp_g,
                  contexto=contexto, estado=estado, hist=hist, conoc=conoc, cola=cola, llm1=llm1, llm2=llm2, revision=revision,
                  acciones=acciones, copia=copia, skills=skills, pruebas=pruebas, aprob=aprob, mensajes=mensajes, slackapi=slackapi, email=email,
                  incid=incid, bdinc=bdinc, rep_sync=rep_sync, cambios=cambios, sla=sla, reportes=reportes, panel=panel,
@@ -275,9 +289,9 @@ def draw(focus=None, title=None, skip=()):
 # ───────────────────────── Salida ─────────────────────────
 HP = {
  "harness": (None, None, []),
- "harness-hp1": (["u_sop", "app", "login", "filtro", "consulta", "resp_g", "contexto", "estado", "hist", "conoc", "skills", "cola", "llm1", "revision", "acciones", "incid"],
+ "harness-hp1": (["u_sop", "app", "login", "filtro", "consulta", "resp_g", "contexto", "estado", "hist", "conoc", "skills", "cola", "cb_llm", "llm1", "revision", "acciones", "incid", "usuarios"],
                  "happy path 1 — soporte responde al cliente y escala (Diego)", [("app", "incid")]),
- "harness-hp2": (["u_sre", "app", "login", "filtro", "consulta", "contexto", "hist", "skills", "cola", "llm1", "revision", "acciones", "copia", "aprob", "mensajes", "slackapi"],
+ "harness-hp2": (["u_sre", "app", "login", "filtro", "consulta", "contexto", "hist", "skills", "cola", "cb_llm", "llm1", "revision", "acciones", "copia", "aprob", "mensajes", "cb_slack", "slackapi", "usuarios"],
                  "happy path 2 — SRE ejecuta una query y una escritura aprobada (Valeria)", [("app", "incid")]),
  "harness-hp3": (["incid", "bdinc", "rep_sync", "cambios", "estado", "sla", "mensajes", "audit", "u_im", "app", "login", "filtro", "consulta", "reportes", "panel"],
                  "happy path 3 — se cierra un incidente y todos ven lo mismo (Marco)", []),

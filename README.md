@@ -28,7 +28,7 @@ Los usuarios modelo están en `Personas/`: [Diego](Personas/Diego.md) (soporte),
 
 ## Requerimientos
 
-- [Funcionales](Requirements/ReqFunc.md) (RF01 a RF25)
+- [Funcionales](Requirements/ReqFunc.md) (RF01 a RF26)
 - [No funcionales](Requirements/ReqNoFunc.md) (RNF01 a RNF13)
 
 ## Harness
@@ -41,7 +41,7 @@ Los pasos de R.E.D.A.L.E. están en `REDALE/`: [requerimientos](REDALE/1-Requeri
 
 ![Harness de Genius-x](Diagramas/harness.png)
 
-Hecho en Excalidraw. La iteración #1 es el harness actual con los SPOF marcados en rojo, la iteración #2 es el nuevo. Archivos: [harness.pdf](Diagramas/harness.pdf), [harness.excalidraw](Diagramas/harness.excalidraw) (para editarlo en excalidraw.com), [harness.png](Diagramas/harness.png).
+Hecho en Excalidraw. La iteración #1 es el harness actual con los SPOF marcados en rojo, la iteración #2 es el nuevo, con el cuello de botella, los circuit breakers y el caché marcados. Archivos: [harness.pdf](Diagramas/harness.pdf), [harness.excalidraw](Diagramas/harness.excalidraw) (para editarlo en excalidraw.com), [harness.png](Diagramas/harness.png). El mismo diagrama escrito en texto está en [DiagramaFinal.md](Diagramas/DiagramaFinal.md).
 
 ## Happy paths
 

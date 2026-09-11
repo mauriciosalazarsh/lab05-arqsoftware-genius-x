@@ -17,13 +17,13 @@ Diagrama: [Diagramas/harness.pdf](Diagramas/harness.pdf) (fuente editable: [harn
 
 ## 2. Cómo lo pensamos: seguir el camino de cada cosa que pasa
 
-**Camino de una pregunta.** El ingeniero escribe en Genius App → **Login Service** ve quién es y qué puede hacer → **Filtro Service** revisa que la pregunta no traiga cosas raras (instrucciones escondidas, datos sensibles) → **Consulta Service** busca en **Respuestas Guardadas**: si ya existe, responde igual que siempre (así la misma pregunta da la misma respuesta); si no existe → **Contexto Service** junta lo que el LLM necesita: el **Estado Actual** del incidente, los runbooks y postmortems de la **Base de Conocimiento** (con fecha y versión), el **Historial** de lo que ya se hizo en ese incidente y la **Skill** de la tarea (la guía paso a paso de cómo se hace ese tipo de trabajo y con qué acciones) → **Cola de Preguntas** (las urgentes primero) → **LLM local** → **Revisión Service** revisa la respuesta antes de mostrarla → respuesta al ingeniero, con su fuente y fecha.
+**Camino de una pregunta.** El ingeniero escribe en Genius App → **Login Service** ve quién es y qué puede hacer → **Filtro Service** revisa que la pregunta no traiga cosas raras (instrucciones escondidas, datos sensibles) → **Consulta Service** busca en **Cache de Respuestas**: si ya existe, responde igual que siempre (así la misma pregunta da la misma respuesta); si no existe → **Contexto Service** junta lo que el LLM necesita: el **Estado Actual** del incidente, los runbooks y postmortems de la **Base de Conocimiento** (con fecha y versión), el **Historial** de lo que ya se hizo en ese incidente y la **Skill** de la tarea (la guía paso a paso de cómo se hace ese tipo de trabajo y con qué acciones) → **Cola de Preguntas** (las urgentes primero) → **LLM local** → **Revisión Service** revisa la respuesta antes de mostrarla → respuesta al ingeniero, con su fuente y fecha.
 
 **Camino de una acción.** Si la respuesta del LLM es "quiero ejecutar algo" → **Acciones Service** mira la lista de acciones permitidas y el rol del usuario: lectura → ejecuta en la **Copia de lectura** de la BD o en **Pruebas Service**; escritura → **Aprobación Service** le manda el comando exacto a otro SRE por **Mensajes Service** y espera el OK; borrar tablas o cambiar estructura → **BLOQUEADO**, sin excepción. Todo queda en **Auditoría**.
 
-**Camino de un cambio de incidente.** Cuando **Incidentes Service** crea, cambia o cierra un incidente, pone un aviso en la **Cola de Cambios**. De ahí se actualiza el **Estado Actual** (para que nunca se diga "abierto" de algo cerrado), se borran las **Respuestas Guardadas** de ese incidente, **SLA Service** arma o apaga sus alarmas y **Auditoría** guarda el cambio.
+**Camino de un cambio de incidente.** Cuando **Incidentes Service** crea, cambia o cierra un incidente, pone un aviso en la **Cola de Cambios**. De ahí se actualiza el **Estado Actual** (para que nunca se diga "abierto" de algo cerrado), se borran las **Cache de Respuestas** de ese incidente, **SLA Service** arma o apaga sus alarmas y **Auditoría** guarda el cambio.
 
-**Aprender y vigilar.** **Aprendizaje Service** recibe el "esta respuesta estuvo mal" con la corrección, la valida una persona y recién ahí entra a Respuestas Guardadas. **Indexar Job** actualiza la Base de Conocimiento y las Skills cada 15 minutos. **Pruebas Diarias Job** le hace al LLM las preguntas comunes cada día y compara con la respuesta esperada. **Monitoreo Service** mide disponibilidad, latencia y errores de cada pieza. **Reportes Service** arma con eso, y con los plazos de SLA Service, el **Tablero SLA** y el **Panel de salud** con semáforo que ve el incident manager.
+**Aprender y vigilar.** **Aprendizaje Service** recibe el "esta respuesta estuvo mal" con la corrección, la valida una persona y recién ahí entra a Cache de Respuestas. **Indexar Job** actualiza la Base de Conocimiento y las Skills cada 15 minutos. **Pruebas Diarias Job** le hace al LLM las preguntas comunes cada día y compara con la respuesta esperada. **Monitoreo Service** mide disponibilidad, latencia y errores de cada pieza. **Reportes Service** arma con eso, y con los plazos de SLA Service, el **Tablero SLA** y el **Panel de salud** con semáforo que ve el incident manager.
 
 ## 3. Piezas del harness
 
@@ -31,9 +31,10 @@ Diagrama: [Diagramas/harness.pdf](Diagramas/harness.pdf) (fuente editable: [harn
 |---|---|---|---|---|---|---|
 | 1 | **Genius App** (Slack / Web) | Donde el ingeniero pregunta y ve respuestas, tablero y panel | — | Dos copias detrás de un balanceador | Bajo | RF01, RF24 |
 | 2 | **Login Service** | Sabe quién es el usuario y qué puede hacer (soporte, SRE, incident manager) | Todos usaban la misma credencial de admin | Dos copias; límite de pedidos por usuario | Alto | RF12 |
+| 2b | **Registro de Usuarios Service** | Un administrador crea la cuenta, le pone el rol y la desactiva cuando alguien sale del equipo. Guarda usuario y rol en la BD que consulta el Login | Nadie sabía quién tenía acceso ni con qué permisos | Solo el administrador entra; cada alta y baja queda en Auditoría | Alto | RF26, RF12 |
 | 3 | **Filtro Service** | Revisa la pregunta antes de pasarla: instrucciones escondidas, datos sensibles, ¿es consulta o acción? | Instrucciones peligrosas | Si duda, rechaza | Alto | RF19 |
 | 4 | **Consulta Service** | Busca si la pregunta ya tiene respuesta guardada; si no, la manda a armar contexto | Respuestas distintas a la misma pregunta; carga innecesaria al LLM | Responde desde lo guardado aunque el LLM esté caído | Medio | RF01, RF04, RF18, RF23 |
-| 5 | **Respuestas Guardadas** (BD) | Respuestas aprobadas a preguntas comunes y respuestas ya dadas por incidente | Misma pregunta, distinta respuesta | Se borran cuando cambia el incidente o la fuente | Medio | RF04, RF22, RF23 |
+| 5 | **Cache de Respuestas** (BD) | Respuestas aprobadas a preguntas comunes y respuestas ya dadas por incidente. Es el caché que protege al LLM, que es el cuello de botella | Misma pregunta, distinta respuesta | Se borran cuando cambia el incidente o la fuente | Medio | RF04, RF22, RF23 |
 | 6 | **Estado Actual** (BD) | Copia del estado de cada incidente, actualizada al instante por la Cola de Cambios | "Abierto" de un incidente cerrado | Antigüedad máxima 30 s | Alto | RF02 |
 | 7 | **Contexto Service** | Junta estado actual + fragmentos de la Base de Conocimiento (con fecha) + historial del incidente | Data vieja, sin fuente | Si una fuente tiene más de 12 meses o fue reemplazada, lo avisa | Medio | RF03, RF05, RF06 |
 | 8 | **Historial** (BD) | Lo que ya se preguntó y se hizo en cada incidente | Volver a explicar el incidente | Guardado en BD, no en el LLM; sobrevive caídas | Bajo | RF05 |
@@ -52,7 +53,7 @@ Diagrama: [Diagramas/harness.pdf](Diagramas/harness.pdf) (fuente editable: [harn
 | 20 | **SLA Service** | Alarmas al 50 %, 80 % y 100 % del plazo; arma el Tablero SLA | Plazos vencidos sin aviso | Alarmas guardadas en BD, se reintentan | Medio | RF07, RF09, RF24 |
 | 21 | **Mensajes Service** | Manda avisos y pedidos de aprobación por Slack o correo | Slack caído tumbaba a Genius | Cola con reintentos y circuit breaker; si Slack falla, correo | Medio | RF09, RF11 |
 | 22 | **Auditoría** (BD) | Cada pregunta, respuesta, acción, aprobación y resultado, con usuario, hora e incidente | Nadie sabía quién dio la orden | Solo se agrega, nunca se borra; 1 año | Medio | RF15 |
-| 23 | **Aprendizaje Service** | Recibe el feedback (correcta / incorrecta + corrección), lo valida una persona y actualiza Respuestas Guardadas | Corregir lo mismo diez veces | Nada cambia hasta que se valida | Bajo | RF16 |
+| 23 | **Aprendizaje Service** | Recibe el feedback (correcta / incorrecta + corrección), lo valida una persona y actualiza Cache de Respuestas | Corregir lo mismo diez veces | Nada cambia hasta que se valida | Bajo | RF16 |
 | 24 | **Indexar Job** (cada 15 min) | Mete en la Base de Conocimiento lo nuevo o cambiado y marca lo reemplazado | Fuentes viejas | Corre por aviso o por reloj | Bajo | RF06 |
 | 25 | **Pruebas Diarias Job** | Hace las preguntas comunes y compara con la respuesta esperada; si acierta menos de 95 %, no se despliega el cambio | Respuestas que cambian sin que nadie se dé cuenta | Corre a diario y ante cada cambio de modelo | Medio | RF20 |
 | 26 | **Monitoreo Service** | Health de cada pieza, Availability = 2xx/(2xx+5xx), Reliability = 2xx/(2xx+4xx+5xx), P95, cola, errores | No saber si Genius está sano | Alerta cuando se abre un circuit breaker | Bajo | RF21, RNF13 |
@@ -85,10 +86,12 @@ El esquema de clase pone alrededor del LLM ocho bloques. Así quedan en el nuest
 | Slack directo | Mensajes Service con cola, reintentos y circuit breaker; correo de respaldo |
 | Conocimiento solo en la pregunta | Base de Conocimiento actualizada + Historial por incidente en BD |
 
+El único SPOF que queda es **Slack API**, porque es de un tercero y es el único canal de avisos. No lo podemos duplicar, así que lo aguantamos con el circuit breaker de Mensajes Service y con el correo de respaldo.
+
 ## 5. Piezas de riesgo alto (las que hay que vigilar primero)
 
 1. **Acciones Service + Aprobación Service**: es el único camino para ejecutar algo. Si fallan "abiertos", se repite el borrado. Por eso, ante cualquier duda, no ejecutan.
-2. **LLM local**: se satura en la primera semana del mes. Sin cola ni respuesta sin LLM, se cae todo.
+2. **LLM local** (el cuello de botella): se satura en la primera semana del mes. Lo aguantan la Cola de Preguntas, las dos copias, el circuit breaker y el Cache de Respuestas. Sin eso, se cae todo.
 3. **Estado Actual**: si no se actualiza, vuelve el "abierto" de un incidente cerrado.
 4. **BD Incidentes**: fuente de verdad. Réplica síncrona obligatoria.
 5. **Login Service**: si se equivoca de rol, el LLM hace más de lo que debe.

@@ -53,4 +53,4 @@ Base pequeña: una instancia SQL con réplica síncrona basta; el costo está en
 
 ## Conclusión
 
-El cuello de botella es el **LLM** en la primera semana del mes (≈ 1 000 tokens/s de salida). Se resuelve con: Respuestas Guardadas (−60 % de llamadas), Cola de Preguntas con urgentes primero, 3 copias del LLM en el pico y respuesta sin LLM cuando no contesta. El resto del harness cabe en 2 servidores pequeños.
+El cuello de botella es el **LLM** en la primera semana del mes (≈ 1 000 tokens/s de salida). Se resuelve con: Cache de Respuestas (−60 % de llamadas), Cola de Preguntas con urgentes primero, 3 copias del LLM en el pico y respuesta sin LLM cuando no contesta. El resto del harness cabe en 2 servidores pequeños.
