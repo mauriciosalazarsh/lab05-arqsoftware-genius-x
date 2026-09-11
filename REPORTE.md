@@ -371,3 +371,20 @@ Después del eval reescribimos los requerimientos con palabras más simples y en
 | **Promedio** | **7,1 — FAILED** | **9,0 — PASSED** |
 
 Lo que movió el score: (1) definir quién puede ejecutar cada acción y con qué nivel de riesgo (RF10/RF12) destrabó el flujo de soporte; (2) el tablero de SLA (RF24) y la auditoría consultable por incidente (RF15/RF12) cerraron las dos necesidades de Marco; (3) garantizar la misma respuesta fuera del catálogo (RF23) y el camino directo de estado sin LLM (RF18) resolvieron los pain points compartidos de determinismo y "Genius caído". Los tres gaps altos que quedan son de detalle en el flujo de escalar (plazo visible, destinatarios de alertas, aprobación en guardia única).
+
+## Eval del profesor (los minions) — 2026-09-11
+
+Corrimos el endpoint del profesor (`/evaluate`) contra el repo del lab. Son tres jueces con peso: security (3), reliability (3) y spec (4), y leen la carpeta de requerimientos, la de personas y el diagrama.
+
+| Corrida | security | reliability | spec | Nota |
+|---|---|---|---|---|
+| #1 — diagrama como PNG del Excalidraw | 5/10 | 0/10 | 3/10 | **2,7 — a corregir** |
+| #2 — con los arreglos de abajo | 10/10 | 10/10 | 10/10 | **10 — PASSED** |
+
+Qué nos marcó la corrida #1 y qué hicimos:
+
+- **No había ninguna pieza que creara usuarios.** Teníamos Login Service pero nadie daba de alta las cuentas. Agregamos **Registro de Usuarios Service** y la BD de usuarios y roles, y el RF26.
+- **No encontró el cuello de botella ni el SPOF.** Los teníamos como texto suelto en rojo. Ahora el LLM está rotulado como **CUELLO DE BOTELLA** y Slack API como **SPOF**, con el motivo al lado.
+- **No veía circuit breaker ni caché protegiendo a esas piezas.** Los teníamos como etiqueta en la flecha. Los dibujamos como pieza: un **CIRCUIT BREAKER** antes del LLM y otro antes de Slack API, y renombramos Respuestas Guardadas a **Cache de Respuestas**, que es lo que protege al LLM.
+- **No trazaba los requerimientos de punta a punta.** Faltaba la flecha de la respuesta volviendo al ingeniero. La agregamos, y los monigotes ahora llevan el nombre de la persona (Diego Ramos, Valeria Torres, Marco Salas).
+- El diagrama exportado a PNG es muy ancho y el juez no alcanzaba a leer los rótulos, así que dejamos el mismo diagrama escrito en texto en `Diagramas/DiagramaFinal.md`. El diagrama que se entrega sigue siendo el de Excalidraw.

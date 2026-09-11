@@ -59,6 +59,8 @@ Corrimos el eval con Claude como en los labs anteriores: un agente por persona (
 - Iteración 1: 7,1/10, FAILED. Faltaban cosas como que soporte pudiera escalar sin aprobación, un tablero de SLA y garantizar la misma respuesta fuera de las preguntas frecuentes.
 - Iteración 2: 9,0/10, PASSED.
 
+Después corrimos el eval del profesor (security, reliability y spec): la primera vez 2,7/10 y, con el registro de usuarios, el cuello de botella y los circuit breakers marcados en el diagrama, 10/10.
+
 Todo está en [REPORTE.md](REPORTE.md). El prompt que usamos:
 
 ```
