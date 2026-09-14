@@ -15,14 +15,14 @@ Lo que hay que entregar es el diagrama del nuevo harness alrededor del LLM, marc
 - Requerimientos: [funcionales](Requirements/ReqFunc.md) y [no funcionales](Requirements/ReqNoFunc.md).
 - [HARNESS.md](HARNESS.md): qué falla hoy y qué pieza le pusimos a cada problema, con los SPOF y el riesgo de cada una.
 - `REDALE/`: [requerimientos](REDALE/1-Requerimientos.md), [estimación](REDALE/2-Estimar.md) y [diseño del servicio](REDALE/3-Disenar-el-servicio.md).
-- [HAPPY-PATH.md](HAPPY-PATH.md): los pasos del happy path.
+- [HAPPY-PATH.md](HAPPY-PATH.md): los pasos de cada happy path.
 - [REPORTE.md](REPORTE.md): las corridas del eval.
 
 ## Diagrama
 
 Hecho en Excalidraw: [harness.pdf](Diagramas/harness.pdf) y [harness.excalidraw](Diagramas/harness.excalidraw). La iteración #1 es el harness de hoy con los SPOF en rojo; la #2 es el nuevo, con el cuello de botella, los circuit breakers y el caché marcados. El mismo diagrama en texto está en [DiagramaFinal.md](Diagramas/DiagramaFinal.md).
 
-El diagrama con el happy path resaltado y los pasos numerados: [soporte responde y escala](Diagramas/harness-hp1.pdf) (Diego). Y el camino de falla, [el LLM no responde](Diagramas/harness-sin-llm.pdf).
+Un PDF por happy path: [soporte responde y escala](Diagramas/harness-hp1.pdf) (Diego), [query y escritura aprobada](Diagramas/harness-hp2.pdf) (Valeria), [se cierra un incidente](Diagramas/harness-hp3.pdf) (Marco) y [el LLM no responde](Diagramas/harness-sin-llm.pdf).
 
 ## Eval
 
