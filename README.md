@@ -1,95 +1,31 @@
 # Lab 05 – Genius-x
 
-Integrantes: Fabian Alvarado Vargas, Mauricio Salazar Hillenbrand
-Curso: Arquitectura de Software, UTEC 2026-II. Caso de estudio #5, tema reliability y fault tolerance.
+Fabian Alvarado Vargas y Mauricio Salazar Hillenbrand.
+Arquitectura de Software, UTEC 2026-II. Caso 5: reliability y fault tolerance.
 
 ## El problema
 
-Genius es el software que usa la compañía para manejar sus incidentes diarios: customer escalations (vienen del cliente, impacto directo en el negocio), engineering escalations (los reporta ingeniería) y support escalations (vienen del cliente pero ya pasaron por soporte). Como el detalle de los incidentes no puede ser público, data science puso un LLM local y le dio una API al área de incidentes para consultar y ejecutar acciones (queries a la base, E2E tests). Hoy el LLM solo tiene MCP a la base de datos y a Slack, nada más alrededor.
+Genius es el software con el que la compañía maneja sus incidentes. Data science le puso un LLM local con MCP a la base de datos y a Slack, y nada más alrededor. Con eso: el LLM borró la base de datos, responde con data vieja, la primera semana de cada mes no responde, a la misma pregunta contesta distinto y dice "abierto" de incidentes que se cerraron hace horas.
 
-Con eso pasaron estas cosas:
+Lo que hay que entregar es el diagrama del nuevo harness alrededor del LLM, marcando los SPOF y las piezas de riesgo alto. Son 10 000 incidentes por semana, 50 a 100 ingenieros y SLA de 1 día para customer escalations y 3 días para engineering.
 
-- Un ingeniero de soporte dio una instrucción para un escalamiento y el LLM borró la base de datos.
-- El LLM no aprende, responde con data vieja o equivocada.
-- La primera semana de cada mes (el día con más incidentes) el LLM no responde o responde mal.
-- A la misma pregunta responde distinto, y las preguntas comunes cambian de respuesta cada día.
-- Soporte se queja de que Genius dice que un incidente está abierto cuando se cerró hace horas.
+## Qué hay acá
 
-El enunciado pide: 10 000 incidentes por semana o más en picos, 50 a 100 ingenieros, SLA de 1 día para customer escalations y 3 días para engineering, disponibilidad y tolerancia a fallos, y latencia mínima para decisiones críticas. El entregable es el diagrama de arquitectura del nuevo harness, identificando los SPOF y los componentes de riesgo alto.
-
-## Usuarios
-
-- Ingenieros de soporte: procesan los customer escalations y le responden al cliente.
-- SREs on-call: atienden los engineering escalations y los P1, ejecutan queries y tests desde Genius.
-- Incident manager: responde por los SLA y por lo que se le dice al cliente.
-- Data science es dueño del LLM, y la compañía y sus clientes quieren los incidentes resueltos a tiempo y sin que los datos salgan de la red.
-
-Los usuarios modelo están en `Personas/`: [Diego](Personas/Diego.md) (soporte), [Valeria](Personas/Valeria.md) (SRE) y [Marco](Personas/Marco.md) (incident manager).
-
-## Requerimientos
-
-- [Funcionales](Requirements/ReqFunc.md) (RF01 a RF26)
-- [No funcionales](Requirements/ReqNoFunc.md) (RNF01 a RNF13)
-
-## Harness
-
-Fuimos problema por problema y para cada uno pusimos una pieza alrededor del LLM, cada una con una sola responsabilidad. Está explicado en [HARNESS.md](HARNESS.md): qué falla hoy, cómo lo pensamos siguiendo el camino de una pregunta, de una acción y de un cambio de incidente, la lista de piezas, los SPOF que se eliminan y las piezas de riesgo alto.
-
-Los pasos de R.E.D.A.L.E. están en `REDALE/`: [requerimientos](REDALE/1-Requerimientos.md), [estimación](REDALE/2-Estimar.md) y [diseño del servicio](REDALE/3-Disenar-el-servicio.md).
+- `Personas/`: [Diego](Personas/Diego.md) (soporte), [Valeria](Personas/Valeria.md) (SRE on-call) y [Marco](Personas/Marco.md) (incident manager).
+- Requerimientos: [funcionales](Requirements/ReqFunc.md) y [no funcionales](Requirements/ReqNoFunc.md).
+- [HARNESS.md](HARNESS.md): qué falla hoy y qué pieza le pusimos a cada problema, con los SPOF y el riesgo de cada una.
+- `REDALE/`: [requerimientos](REDALE/1-Requerimientos.md), [estimación](REDALE/2-Estimar.md) y [diseño del servicio](REDALE/3-Disenar-el-servicio.md).
+- [HAPPY-PATH.md](HAPPY-PATH.md): los pasos de cada happy path.
+- [REPORTE.md](REPORTE.md): las corridas del eval.
 
 ## Diagrama
 
 ![Harness de Genius-x](Diagramas/harness.png)
 
-Hecho en Excalidraw. La iteración #1 es el harness actual con los SPOF marcados en rojo, la iteración #2 es el nuevo, con el cuello de botella, los circuit breakers y el caché marcados. Archivos: [harness.pdf](Diagramas/harness.pdf), [harness.excalidraw](Diagramas/harness.excalidraw) (para editarlo en excalidraw.com), [harness.png](Diagramas/harness.png). El mismo diagrama escrito en texto está en [DiagramaFinal.md](Diagramas/DiagramaFinal.md).
+Hecho en Excalidraw: [harness.pdf](Diagramas/harness.pdf) y [harness.excalidraw](Diagramas/harness.excalidraw). La iteración #1 es el harness de hoy con los SPOF en rojo; la #2 es el nuevo, con el cuello de botella, los circuit breakers y el caché marcados. El mismo diagrama en texto está en [DiagramaFinal.md](Diagramas/DiagramaFinal.md).
 
-## Happy paths
-
-Uno por persona, seguidos sobre el diagrama con el camino resaltado y los pasos numerados. Los pasos están en [HAPPY-PATH.md](HAPPY-PATH.md).
-
-- [Happy path 1](Diagramas/harness-hp1.pdf): soporte responde al cliente y escala (Diego).
-- [Happy path 2](Diagramas/harness-hp2.pdf): el SRE ejecuta una query y una escritura aprobada (Valeria).
-- [Happy path 3](Diagramas/harness-hp3.pdf): se cierra un incidente y todos ven lo mismo (Marco).
-- [Camino de falla](Diagramas/harness-sin-llm.pdf): el LLM no responde.
+Un PDF por happy path: [soporte responde y escala](Diagramas/harness-hp1.pdf) (Diego), [query y escritura aprobada](Diagramas/harness-hp2.pdf) (Valeria), [se cierra un incidente](Diagramas/harness-hp3.pdf) (Marco) y [el LLM no responde](Diagramas/harness-sin-llm.pdf).
 
 ## Eval
 
-Corrimos el eval con Claude como en los labs anteriores: un agente por persona (`Agents/`) evalúa los requerimientos contra sus necesidades y pain points, y un juez ([Eval-Spec](Agents/Spec/Eval-Spec.md)) audita y da el puntaje.
-
-- Iteración 1: 7,1/10, FAILED. Faltaban cosas como que soporte pudiera escalar sin aprobación, un tablero de SLA y garantizar la misma respuesta fuera de las preguntas frecuentes.
-- Iteración 2: 9,0/10, PASSED.
-
-Después corrimos el eval del profesor (security, reliability y spec): la primera vez 2,7/10 y, con el registro de usuarios, el cuello de botella y los circuit breakers marcados en el diagrama, 10/10.
-
-Todo está en [REPORTE.md](REPORTE.md). El prompt que usamos:
-
-```
-Actúa como el agente definido en Agents/[Persona]-Agent.md. Encarna a esa persona
-(Personas/[Persona].md): necesidades y pain points. No eres un asistente.
-
-Lee Requirements/ReqFunc.md y Requirements/ReqNoFunc.md.
-
-1. Para cada necesidad (N) y pain point (P) tuyo indica qué requerimiento(s) lo cubren
-   (ID exacto) y si la cobertura es total (5), parcial (1) o nula (0). Ante la duda, el menor.
-2. Señala lo que NINGÚN requerimiento cubre y qué RF/RNF habría que crear o cambiar.
-3. Veredicto en primera persona: ¿Genius te sirve en tu día a día? ¿Qué te falta?
-
-Luego un cuarto agente actúa como Agents/Spec/Eval-Spec.md: audita las tres evaluaciones
-contra el texto de los requerimientos, calcula el score por persona y el promedio, y da
-PASSED o FAILED.
-```
-
-## Estructura
-
-```
-lab05/
-├── README.md
-├── HARNESS.md
-├── HAPPY-PATH.md
-├── REPORTE.md
-├── Personas/        Diego.md, Valeria.md, Marco.md
-├── Requirements/    ReqFunc.md, ReqNoFunc.md
-├── Agents/          un agente por persona y Spec/Eval-Spec.md
-├── REDALE/          1-Requerimientos, 2-Estimar, 3-Disenar-el-servicio
-└── Diagramas/       harness y harness-hp1/hp2/hp3/sin-llm (.excalidraw, .pdf, .png, .svg)
-```
+Un agente por persona (`Agents/`) evalúa los requerimientos contra sus necesidades y pain points, y un juez ([Eval-Spec](Agents/Spec/Eval-Spec.md)) da el puntaje: 7,1 en la primera corrida y 9,0 en la segunda. El eval del profesor dio 10/10. Está todo en [REPORTE.md](REPORTE.md).
