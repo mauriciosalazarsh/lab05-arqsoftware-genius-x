@@ -42,7 +42,7 @@ flowchart LR
   CB2["CIRCUIT BREAKER de Slack - retry y si Slack no responde sale por correo"]
   SLACK["Slack API - SPOF, es de un tercero y es el unico canal"]
   EMAIL["Email Service - respaldo del SPOF de Slack"]
-  INC["Incidentes Service - crea, clasifica, escala y cierra incidentes - RF07 RF08"]
+  INC["Incidentes Service - crea, clasifica, escala y cierra incidentes, arma el resumen con las queries que ya se hicieron y el impacto, y se lo asigna al SRE on-call - RF07 RF08"]
   BDINC[("BD Incidentes con replica sincrona - RPO 0")]
   CAMBIOS["Cola de Cambios - avisa a las demas piezas cuando cambia un incidente - RF02"]
   SLA["SLA Service - plazos 1 dia y 3 dias, alertas 50/80/100 % - RF07 RF09 RF24"]
@@ -90,6 +90,9 @@ flowchart LR
   APROB -->|"aprobado: ejecuta"| ACC
   ACC -->|"todo queda registrado"| AUD
   APP -->|"comando /incident id, camino directo sin LLM - RF18"| INC
+  INC -->|"toma lo que ya se pregunto y se ejecuto para el resumen"| HIST
+  INC -->|"abre el hilo con el resumen y la fecha limite, asignado al on-call"| MSG
+  SLACK -->|"al on-call le llega el escalamiento asignado con el resumen"| VALERIA
   INC -->|"guarda"| BDINC
   INC -->|"creado, cambiado o cerrado"| CAMBIOS
   CAMBIOS -->|"actualiza el estado en 30 s"| ESTADO
@@ -112,7 +115,7 @@ flowchart LR
 ## Caminos completos
 
 - Diego pregunta por un incidente: Diego -> Genius App -> Login Service -> Filtro Service -> Consulta Service -> CACHE de Respuestas, y si no está, Contexto Service -> Cola de Preguntas -> CIRCUIT BREAKER -> LLM local -> Revision Service -> Genius App -> Diego. Cubre RF01, RF02, RF03, RF04, RF05, RF17, RF19, RF23.
-- Diego escala un incidente: la misma cadena hasta Revision Service -> Acciones Service -> Incidentes Service -> BD Incidentes -> Cola de Cambios -> SLA Service -> Mensajes Service -> CIRCUIT BREAKER -> Slack API, y si Slack no responde, Email Service. Cubre RF07, RF08, RF09.
+- Diego escala un incidente: la misma cadena hasta Revision Service -> Acciones Service -> Incidentes Service, que le pone tipo, prioridad y fecha límite, arma el resumen con lo que ya se preguntó y se ejecutó y se lo asigna al SRE on-call -> BD Incidentes -> Cola de Cambios -> SLA Service -> Mensajes Service -> CIRCUIT BREAKER -> Slack API -> le llega a Valeria, y si Slack no responde, Email Service. Cubre RF07, RF08, RF09.
 - Valeria corre una query: hasta Acciones Service -> BD Copia de lectura, y la respuesta vuelve por Revision Service y Genius App. Una escritura pasa antes por Aprobacion Service y el OK de otro SRE. Cubre RF10, RF11, RF13, RF14.
 - Marco mira los plazos: Marco -> Genius App -> Login Service -> Reportes Service -> Tablero SLA y Panel de salud. Cubre RF21, RF24.
 - Cuando el LLM no responde: Consulta Service contesta con el estado actual y la respuesta guardada, marcado "sin LLM", y `/incident <id>` va directo a Incidentes Service. Cubre RF18.
