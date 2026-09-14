@@ -91,6 +91,5 @@ lab05/
 ├── Requirements/    ReqFunc.md, ReqNoFunc.md
 ├── Agents/          un agente por persona y Spec/Eval-Spec.md
 ├── REDALE/          1-Requerimientos, 2-Estimar, 3-Disenar-el-servicio
-├── Diagramas/       harness y harness-hp1/hp2/hp3/sin-llm (.excalidraw, .pdf, .png, .svg)
-└── tools/           scripts para generar y exportar el diagrama
+└── Diagramas/       harness y harness-hp1/hp2/hp3/sin-llm (.excalidraw, .pdf, .png, .svg)
 ```
