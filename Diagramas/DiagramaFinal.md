@@ -1,6 +1,6 @@
 # Diagrama final — Genius-x
 
-Mismo diagrama que `harness.excalidraw` / `harness.pdf` / `harness.png`, escrito en mermaid.
+Mismo diagrama que `harness.excalidraw` y `harness.pdf`, escrito en mermaid.
 
 - CUELLO DE BOTELLA: el LLM local, que se satura en el pico. Lo aguantan la Cola de Preguntas, las dos copias, el CIRCUIT BREAKER y el CACHE de Respuestas.
 - SPOF: Slack API, de un tercero y único canal de avisos. Lo aguantan el CIRCUIT BREAKER y el Email Service.

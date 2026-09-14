@@ -20,8 +20,6 @@ Lo que hay que entregar es el diagrama del nuevo harness alrededor del LLM, marc
 
 ## Diagrama
 
-![Harness de Genius-x](Diagramas/harness.png)
-
 Hecho en Excalidraw: [harness.pdf](Diagramas/harness.pdf) y [harness.excalidraw](Diagramas/harness.excalidraw). La iteración #1 es el harness de hoy con los SPOF en rojo; la #2 es el nuevo, con el cuello de botella, los circuit breakers y el caché marcados. El mismo diagrama en texto está en [DiagramaFinal.md](Diagramas/DiagramaFinal.md).
 
 Un PDF por happy path: [soporte responde y escala](Diagramas/harness-hp1.pdf) (Diego), [query y escritura aprobada](Diagramas/harness-hp2.pdf) (Valeria), [se cierra un incidente](Diagramas/harness-hp3.pdf) (Marco) y [el LLM no responde](Diagramas/harness-sin-llm.pdf).
